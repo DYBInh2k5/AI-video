@@ -60,7 +60,8 @@ export default function Home() {
     try {
       await axios.post(`${API_URL}/translate`, {
         video_id: videoId,
-        target_language: targetLang
+        target_language: targetLang,
+        voice_type: selectedVoice
       });
 
       // Poll for status

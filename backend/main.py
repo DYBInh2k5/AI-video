@@ -53,10 +53,11 @@ def get_processor():
 class TranslationRequest(BaseModel):
     video_id: str
     target_language: str
+    voice_type: str = "clone" # Default to clone
 
 jobs = {}
 
-async def process_video_task(job_id: str, video_path: str, target_lang: str):
+async def process_video_task(job_id: str, video_path: str, target_lang: str, voice_type: str):
     try:
         jobs[job_id]["status"] = "processing"
         proc = get_processor()
@@ -64,7 +65,7 @@ async def process_video_task(job_id: str, video_path: str, target_lang: str):
         output_filename = f"{job_id}_translated.mp4"
         output_path = os.path.join(OUTPUT_DIR, output_filename)
         
-        result = proc.process(video_path, target_lang, output_path)
+        result = proc.process(video_path, target_lang, output_path, voice_type)
         
         jobs[job_id] = {
             "status": "completed",
@@ -106,7 +107,7 @@ async def translate_video(request: TranslationRequest, background_tasks: Backgro
     if not video_path:
         raise HTTPException(status_code=404, detail="Video file not found")
     
-    background_tasks.add_task(process_video_task, request.video_id, video_path, request.target_language)
+    background_tasks.add_task(process_video_task, request.video_id, video_path, request.target_language, request.voice_type)
     return {"job_id": request.video_id, "status": "queued"}
 
 @app.get("/status/{job_id}")
