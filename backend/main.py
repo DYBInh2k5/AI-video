@@ -13,6 +13,19 @@ app = FastAPI(title="AI Video Translator")
 # Priority: BASE_URL env > RENDER_EXTERNAL_URL (Render.com) > Default localhost
 BASE_URL = os.getenv("BASE_URL") or os.getenv("RENDER_EXTERNAL_URL") or "http://localhost:8000"
 
+@app.get("/")
+async def root():
+    return {
+        "status": "online",
+        "message": "AI Video Translator API is running",
+        "endpoints": {
+            "upload": "/upload",
+            "translate": "/translate",
+            "status": "/status/{job_id}",
+            "outputs": "/outputs"
+        }
+    }
+
 # CORS
 app.add_middleware(
     CORSMiddleware,
