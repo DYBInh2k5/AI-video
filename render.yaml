@@ -1,0 +1,31 @@
+services:
+  # Backend service
+  - type: web
+    name: ai-video-backend
+    env: docker
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    plan: pro # Recommendation: AI models need at least 4GB-8GB RAM
+    envVars:
+      - key: BASE_URL
+        fromContext: instanceUrl
+      - key: COQUI_TOS_AGREED
+        value: "1"
+    disk:
+      name: ai-models-data
+      mountPath: /root/.local/share/tts
+      sizeGB: 10
+
+  # Frontend service
+  - type: web
+    name: ai-video-frontend
+    env: docker
+    dockerContext: ./frontend
+    dockerfilePath: ./frontend/Dockerfile
+    plan: free
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: ai-video-backend
+          property: host
