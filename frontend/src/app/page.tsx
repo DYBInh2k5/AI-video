@@ -21,6 +21,7 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [videoId, setVideoId] = useState<string | null>(null);
   const [targetLang, setTargetLang] = useState('en');
+  const [selectedVoice, setSelectedVoice] = useState('clone');
   const [status, setStatus] = useState<'idle' | 'uploading' | 'processing' | 'completed' | 'failed'>('idle');
   const [progress, setProgress] = useState(0);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
@@ -196,6 +197,21 @@ export default function Home() {
                       <option key={lang.code} value={lang.code}>{lang.name}</option>
                     ))}
                   </select>
+                </div>
+
+                <div>
+                  <label className="text-xs text-slate-500 uppercase tracking-wider mb-2 block">Giọng nói</label>
+                  <select 
+                    value={selectedVoice}
+                    onChange={(e) => setSelectedVoice(e.target.value)}
+                    className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all appearance-none"
+                  >
+                    <option value="clone">Clone giọng gốc (ElevenLabs Style)</option>
+                    <option value="male_1">Giọng Nam trầm ấm</option>
+                    <option value="female_1">Giọng Nữ truyền cảm</option>
+                    <option value="news_1">Phát thanh viên</option>
+                  </select>
+                  <p className="text-[10px] text-slate-500 mt-2 italic">* Tính năng Tách nhạc nền và giữ nhạc gốc đã được kích hoạt tự động.</p>
                 </div>
 
                 <div className="pt-4">
