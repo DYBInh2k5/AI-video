@@ -3,9 +3,11 @@ import time
 import torch
 import whisper
 import shutil
+import numpy as np
 from moviepy.editor import VideoFileClip, AudioFileClip, CompositeAudioClip
 from TTS.api import TTS
 from deep_translator import GoogleTranslator
+from spleeter.separator import Separator
 
 class VideoProcessor:
     def __init__(self):
@@ -20,6 +22,10 @@ class VideoProcessor:
             # Load XTTS model for voice cloning
             self.tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to(self.device)
             print("✅ XTTS v2 Loaded")
+            
+            # Initialize Spleeter for Vocal Removal
+            self.separator = Separator('spleeter:2stems')
+            print("✅ Spleeter Loaded")
         except Exception as e:
             print(f"❌ Error loading models: {e}")
 
@@ -37,9 +43,18 @@ class VideoProcessor:
             video = VideoFileClip(video_path)
             video.audio.write_audiofile(temp_audio, logger=None)
             
-            # 2. Transcribe with timestamps
-            print("Step 2: Transcribing with timestamps...")
-            result = self.whisper_model.transcribe(temp_audio, verbose=False)
+            # 2. Vocal Removal (Keep background music)
+            print("Step 2: Separating Vocals and Background Music...")
+            self.separator.separate_to_file(temp_audio, temp_dir)
+            # Spleeter creates a folder with the name of the file
+            audio_name = os.path.splitext(os.path.basename(temp_audio))[0]
+            vocals_path = os.path.join(temp_dir, audio_name, "vocals.wav")
+            accompaniment_path = os.path.join(temp_dir, audio_name, "accompaniment.wav")
+            
+            # 3. Transcribe with timestamps
+            print("Step 3: Transcribing with timestamps...")
+            # Use vocals only for better transcription accuracy
+            result = self.whisper_model.transcribe(vocals_path if os.path.exists(vocals_path) else temp_audio, verbose=False)
             
             segments = []
             for s in result['segments']:
@@ -49,49 +64,50 @@ class VideoProcessor:
                     "text": s['text'].strip()
                 })
             
-            print(f"📝 Transcribed {len(segments)} segments")
-            
-            # 3. Translate segments
-            print(f"Step 3: Translating {len(segments)} segments to {target_lang}...")
+            # 4. Translate segments
+            print(f"Step 4: Translating {len(segments)} segments to {target_lang}...")
             translator = GoogleTranslator(source='auto', target=target_lang)
-            
-            full_transcription = []
             full_translation = []
             
             for s in segments:
                 translated = translator.translate(s['text'])
                 s['translated_text'] = translated
-                full_transcription.append(s['text'])
                 full_translation.append(translated)
             
-            # 4. Generate cloned voice audio (One by one to match timing)
-            print("Step 4: Generating AI Voice Clone for each segment...")
-            # For simplicity in this version, we still generate a full audio 
-            # but we can now pass the segments back to the frontend for editing.
-            output_audio_only = os.path.join(temp_dir, "translated_voice.wav")
+            # 5. Generate cloned voice audio
+            print("Step 5: Generating AI Voice Clone...")
+            output_voice_path = os.path.join(temp_dir, "translated_voice.wav")
             self.tts.tts_to_file(
                 text=" ".join(full_translation),
-                speaker_wav=temp_audio,
+                speaker_wav=vocals_path if os.path.exists(vocals_path) else temp_audio,
                 language=target_lang,
-                file_path=output_audio_only
+                file_path=output_voice_path
             )
             
-            # 5. Merge back
-            print("Step 5: Merging audio and video...")
-            new_voice = AudioFileClip(output_audio_only)
-            final_video = video.set_audio(new_voice)
+            # 6. Merge Cloned Voice with Original Background Music
+            print("Step 6: Merging AI Voice with Background Music...")
+            new_voice = AudioFileClip(output_voice_path)
+            
+            if os.path.exists(accompaniment_path):
+                bg_music = AudioFileClip(accompaniment_path).volumex(0.8) # Keep music at 80% volume
+                final_audio = CompositeAudioClip([bg_music, new_voice])
+            else:
+                final_audio = new_voice
+            
+            # 7. Merge back to Video
+            final_video = video.set_audio(final_audio)
             final_video.write_videofile(output_path, codec="libx264", audio_codec="aac", logger=None)
             
             # Cleanup
             video.close()
             new_voice.close()
-            # shutil.rmtree(temp_dir, ignore_errors=True) # Keep for a bit if debugging
+            if 'bg_music' in locals(): bg_music.close()
+            shutil.rmtree(temp_dir, ignore_errors=True)
             
-            print(f"🎉 Job {job_id} completed successfully!")
             return {
                 "status": "success",
                 "segments": segments,
-                "transcription": " ".join(full_transcription),
+                "transcription": result['text'],
                 "translation": " ".join(full_translation)
             }
             
