@@ -26,12 +26,14 @@ export default function Home() {
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [transcription, setTranscription] = useState<string | null>(null);
   const [translation, setTranslation] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
     const selectedFile = e.target.files[0];
     setFile(selectedFile);
     setStatus('uploading');
+    setError(null);
 
     const formData = new FormData();
     formData.append('file', selectedFile);
@@ -40,8 +42,9 @@ export default function Home() {
       const res = await axios.post(`${API_URL}/upload`, formData);
       setVideoId(res.data.video_id);
       setStatus('idle');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setError(err.response?.data?.detail || "Lỗi khi tải video lên server.");
       setStatus('failed');
     }
   };
@@ -50,6 +53,7 @@ export default function Home() {
     if (!videoId) return;
     setStatus('processing');
     setProgress(10);
+    setError(null);
 
     try {
       await axios.post(`${API_URL}/translate`, {
@@ -59,23 +63,29 @@ export default function Home() {
 
       // Poll for status
       const interval = setInterval(async () => {
-        const res = await axios.get(`${API_URL}/status/${videoId}`);
-        if (res.data.status === 'completed') {
-          setResultUrl(res.data.url);
-          setTranscription(res.data.transcription);
-          setTranslation(res.data.translation);
-          setStatus('completed');
-          setProgress(100);
-          clearInterval(interval);
-        } else if (res.data.status === 'failed') {
-          setStatus('failed');
-          clearInterval(interval);
-        } else if (res.data.status === 'processing') {
-          setProgress((prev) => Math.min(prev + 5, 95));
+        try {
+          const res = await axios.get(`${API_URL}/status/${videoId}`);
+          if (res.data.status === 'completed') {
+            setResultUrl(res.data.url);
+            setTranscription(res.data.transcription);
+            setTranslation(res.data.translation);
+            setStatus('completed');
+            setProgress(100);
+            clearInterval(interval);
+          } else if (res.data.status === 'failed') {
+            setError(res.data.error || "Quá trình xử lý AI thất bại.");
+            setStatus('failed');
+            clearInterval(interval);
+          } else if (res.data.status === 'processing') {
+            setProgress((prev) => Math.min(prev + 5, 95));
+          }
+        } catch (e) {
+          console.error("Polling error", e);
         }
       }, 3000);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setError(err.response?.data?.detail || "Không thể kết nối với AI Backend.");
       setStatus('failed');
     }
   };
@@ -208,6 +218,20 @@ export default function Home() {
               </div>
             </div>
           </div>
+
+          {/* Error Message */}
+          <AnimatePresence>
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm flex items-center gap-2"
+              >
+                <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Result Area */}
           <AnimatePresence>

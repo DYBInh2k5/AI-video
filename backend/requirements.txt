@@ -10,3 +10,4 @@ python-dotenv
 requests
 deep-translator
 ffmpeg-python
+spleeter
