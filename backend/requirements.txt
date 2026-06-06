@@ -3,11 +3,9 @@ uvicorn
 python-multipart
 openai-whisper
 moviepy
-TTS
+coqui-tts
 pydantic
 python-dotenv
 requests
-torch
-torchaudio
-ffmpeg-python
 deep-translator
+ffmpeg-python

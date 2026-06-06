@@ -2,35 +2,38 @@ FROM python:3.10
 
 # Create a non-root user for Hugging Face
 RUN useradd -m -u 1000 user
-USER user
-ENV PATH="/home/user/.local/bin:$PATH"
-
-WORKDIR /app
-
-# Switch to root to install system dependencies
 USER root
+
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     build-essential \
-    libsndfile1-dev \
+    libsndfile1 \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Switch back to non-root user
-USER user
+WORKDIR /app
 
-# Upgrade pip and install wheel
+# Upgrade pip
 RUN pip install --no-cache-dir --upgrade pip wheel setuptools
 
+# Install torch separately to handle potential memory/cache issues
+RUN pip install --no-cache-dir torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+
 # Copy requirements and install
-COPY --chown=user backend/requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy backend files
-COPY --chown=user backend/ .
+COPY backend/ .
 
-# Ensure upload/output directories exist with correct permissions
-RUN mkdir -p uploads outputs temp_processing
+# Fix permissions for the non-root user
+RUN mkdir -p uploads outputs temp_processing && \
+    chown -R user:user /app && \
+    chmod -R 777 /app
+
+USER user
+ENV PATH="/home/user/.local/bin:$PATH"
 
 # Hugging Face specific settings
 ENV COQUI_TOS_AGREED=1
