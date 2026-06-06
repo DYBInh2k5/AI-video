@@ -1,3 +1,12 @@
+---
+title: AI Video Backend
+emoji: 🎥
+colorFrom: indigo
+colorTo: purple
+sdk: docker
+pinned: false
+---
+
 # AI Video Translator & Voice Clone Pro
 
 Trang web tự động dịch video và lồng tiếng bằng AI với tính năng Clone giọng nói, tương tự ElevenLabs nhưng hoàn toàn miễn phí và mã nguồn mở.
@@ -33,6 +42,27 @@ Khác với các dịch vụ khác yêu cầu API Key (OpenAI, Supabase, Anthrop
 3. **Truy cập**:
    - Giao diện người dùng: `http://localhost:3000`
    - API Backend: `http://localhost:8000`
+
+## Các lựa chọn Deploy thay thế
+
+Ngoài **Render** và **Railway**, bạn có thể cân nhắc các nền tảng sau, đặc biệt là các nền tảng hỗ trợ AI tốt:
+
+1. **Hugging Face Spaces (Khuyên dùng cho AI)**:
+   - **Ưu điểm**: Là "thánh địa" của AI. Hỗ trợ Docker cực tốt.
+   - **Chi phí**: Có gói miễn phí (CPU), gói GPU (từ $0.60/giờ) rất rẻ nếu bạn chỉ cần chạy lúc dịch.
+   - **Cách làm**: Tạo một Space mới -> Chọn Docker -> Push code lên.
+
+2. **Oracle Cloud (Free Tier - Tốt nhất về cấu hình miễn phí)**:
+   - **Ưu điểm**: Cho phép bạn tạo VPS với **24GB RAM** và 4 CPU (ARM) hoàn toàn miễn phí mãi mãi. Đây là cấu hình "khủng" nhất trong các gói free, cực kỳ phù hợp để chạy Whisper và XTTS mà không tốn xu nào.
+   - **Cách làm**: Đăng ký tài khoản Oracle Cloud -> Tạo Instance Ampere -> Cài Docker và chạy dự án.
+
+3. **Fly.io**:
+   - **Ưu điểm**: Tốc độ deploy cực nhanh, hỗ trợ persistent storage (ổ cứng lưu trữ) tốt để lưu model AI.
+   - **Cách làm**: Cài đặt `flyctl` và chạy `fly launch`.
+
+4. **Koyeb**:
+   - **Ưu điểm**: Giao diện đơn giản như Render nhưng có tốc độ build và network rất nhanh.
+   - **Cách làm**: Kết nối GitHub và chọn thư mục cần deploy.
 
 ## Cấu trúc thư mục
 - `/backend`: Xử lý AI (Whisper, XTTS v2, MoviePy).
