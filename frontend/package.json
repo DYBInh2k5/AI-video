@@ -14,7 +14,7 @@
     "react-dom": "19.2.4",
     "axios": "^1.6.0",
     "framer-motion": "^11.0.0",
-    "lucide-react": "^0.300.0"
+    "lucide-react": "latest"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
