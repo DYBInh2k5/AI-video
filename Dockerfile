@@ -6,11 +6,13 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     build-essential \
+    libsndfile1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements from backend folder
 COPY backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy all backend files
 COPY backend/ .

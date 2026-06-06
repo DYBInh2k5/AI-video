@@ -11,5 +11,3 @@ torch
 torchaudio
 ffmpeg-python
 deep-translator
-framer-motion
-lucide-react
