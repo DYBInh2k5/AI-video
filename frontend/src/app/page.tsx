@@ -29,6 +29,27 @@ export default function Home() {
   const [translation, setTranslation] = useState<string | null>(null);
   const [segments, setSegments] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [serverStatus, setServerStatus] = useState<'unknown' | 'online' | 'offline'>('unknown');
+
+  const checkConnection = async () => {
+    try {
+      setServerStatus('unknown');
+      const res = await axios.get(API_URL);
+      if (res.data.status === 'online') {
+        setServerStatus('online');
+      } else {
+        setServerStatus('offline');
+      }
+    } catch (err) {
+      console.error("Connection check failed", err);
+      setServerStatus('offline');
+      setError(`Không thể kết nối đến: ${API_URL}. Vui lòng kiểm tra lại cấu hình Vercel.`);
+    }
+  };
+
+  useEffect(() => {
+    checkConnection();
+  }, []);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
@@ -105,6 +126,27 @@ export default function Home() {
             </div>
             <span>AI Voice Clone Pro</span>
           </div>
+          
+          <div className="flex items-center gap-4">
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+              serverStatus === 'online' ? 'bg-green-500/10 text-green-500' : 
+              serverStatus === 'offline' ? 'bg-red-500/10 text-red-500' : 'bg-slate-500/10 text-slate-500'
+            }`}>
+              <div className={`w-1.5 h-1.5 rounded-full ${
+                serverStatus === 'online' ? 'bg-green-500 animate-pulse' : 
+                serverStatus === 'offline' ? 'bg-red-500' : 'bg-slate-500'
+              }`} />
+              AI Server: {serverStatus}
+            </div>
+            <button 
+              onClick={checkConnection}
+              className="p-2 hover:bg-white/5 rounded-lg transition-colors text-slate-400"
+              title="Thử kết nối lại"
+            >
+              <Sparkles className="w-4 h-4" />
+            </button>
+          </div>
+
           <div className="hidden md:flex gap-8 text-sm font-medium text-slate-400">
             <a href="#" className="hover:text-white transition-colors">Tính năng</a>
             <a href="#" className="hover:text-white transition-colors">Bảng giá (Free)</a>

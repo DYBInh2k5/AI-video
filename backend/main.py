@@ -29,7 +29,8 @@ async def root():
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, replace with specific domains
+    allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -81,15 +82,21 @@ async def process_video_task(job_id: str, video_path: str, target_lang: str, voi
 
 @app.post("/upload")
 async def upload_video(file: UploadFile = File(...)):
-    file_id = str(uuid.uuid4())
-    file_extension = file.filename.split(".")[-1]
-    file_path = os.path.join(UPLOAD_DIR, f"{file_id}.{file_extension}")
-    
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-    
-    jobs[file_id] = {"status": "uploaded", "filename": file.filename}
-    return {"video_id": file_id}
+    print(f"📥 Incoming upload request: {file.filename}")
+    try:
+        file_id = str(uuid.uuid4())
+        file_extension = file.filename.split(".")[-1]
+        file_path = os.path.join(UPLOAD_DIR, f"{file_id}.{file_extension}")
+        
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        jobs[file_id] = {"status": "uploaded", "filename": file.filename}
+        print(f"✅ File saved as: {file_path}")
+        return {"video_id": file_id}
+    except Exception as e:
+        print(f"❌ Upload error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/translate")
 async def translate_video(request: TranslationRequest, background_tasks: BackgroundTasks):
