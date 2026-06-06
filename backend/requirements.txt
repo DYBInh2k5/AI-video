@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+python-multipart
+openai-whisper
+moviepy
+TTS
+pydantic
+python-dotenv
+requests
+torch
+torchaudio
+ffmpeg-python
+deep-translator
+framer-motion
+lucide-react

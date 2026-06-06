@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.next/
+out/
+build/
+dist/
+*.pyc
+__pycache__/
+.venv/
+venv/
+env/
+
+# AI Models & Data (Very heavy)
+models_cache/
+uploads/
+outputs/
+temp_processing/
+*.wav
+*.mp4
+*.mp3
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
