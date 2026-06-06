@@ -24,6 +24,8 @@ export default function Home() {
   const [status, setStatus] = useState<'idle' | 'uploading' | 'processing' | 'completed' | 'failed'>('idle');
   const [progress, setProgress] = useState(0);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
+  const [transcription, setTranscription] = useState<string | null>(null);
+  const [translation, setTranslation] = useState<string | null>(null);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
@@ -60,6 +62,8 @@ export default function Home() {
         const res = await axios.get(`${API_URL}/status/${videoId}`);
         if (res.data.status === 'completed') {
           setResultUrl(res.data.url);
+          setTranscription(res.data.transcription);
+          setTranslation(res.data.translation);
           setStatus('completed');
           setProgress(100);
           clearInterval(interval);
@@ -220,6 +224,19 @@ export default function Home() {
                   <div className="flex-1 space-y-2">
                     <h3 className="text-lg font-bold">Video của bạn đã sẵn sàng!</h3>
                     <p className="text-slate-400 text-sm">Chúng tôi đã hoàn thành việc dịch và lồng tiếng bằng AI.</p>
+                    
+                    {/* Transcription & Translation Details */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                      <div className="bg-white/5 p-3 rounded-lg border border-white/5">
+                        <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Gốc</p>
+                        <p className="text-xs text-slate-300 line-clamp-3">{transcription}</p>
+                      </div>
+                      <div className="bg-indigo-500/10 p-3 rounded-lg border border-indigo-500/10">
+                        <p className="text-[10px] text-indigo-400 uppercase font-bold mb-1">Dịch</p>
+                        <p className="text-xs text-slate-300 line-clamp-3">{translation}</p>
+                      </div>
+                    </div>
+
                     <div className="flex gap-3 pt-2">
                       <a 
                         href={resultUrl} 

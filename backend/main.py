@@ -64,12 +64,14 @@ async def process_video_task(job_id: str, video_path: str, target_lang: str):
         output_filename = f"{job_id}_translated.mp4"
         output_path = os.path.join(OUTPUT_DIR, output_filename)
         
-        proc.process(video_path, target_lang, output_path)
+        result = proc.process(video_path, target_lang, output_path)
         
         jobs[job_id] = {
             "status": "completed",
             "url": f"{BASE_URL}/outputs/{output_filename}",
-            "filename": output_filename
+            "filename": output_filename,
+            "transcription": result.get("transcription"),
+            "translation": result.get("translation")
         }
     except Exception as e:
         print(f"Error processing video: {e}")
