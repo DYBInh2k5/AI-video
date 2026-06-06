@@ -37,22 +37,40 @@ class VideoProcessor:
             video = VideoFileClip(video_path)
             video.audio.write_audiofile(temp_audio, logger=None)
             
-            # 2. Transcribe
-            print("Step 2: Transcribing...")
+            # 2. Transcribe with timestamps
+            print("Step 2: Transcribing with timestamps...")
             result = self.whisper_model.transcribe(temp_audio, verbose=False)
-            full_text = result['text']
-            print(f"📝 Transcribed: {full_text[:50]}...")
             
-            # 3. Translate
-            print(f"Step 3: Translating to {target_lang}...")
-            translated_text = GoogleTranslator(source='auto', target=target_lang).translate(full_text)
-            print(f"🌐 Translated: {translated_text[:50]}...")
+            segments = []
+            for s in result['segments']:
+                segments.append({
+                    "start": s['start'],
+                    "end": s['end'],
+                    "text": s['text'].strip()
+                })
             
-            # 4. Generate cloned voice audio
-            print("Step 4: Generating AI Voice Clone...")
+            print(f"📝 Transcribed {len(segments)} segments")
+            
+            # 3. Translate segments
+            print(f"Step 3: Translating {len(segments)} segments to {target_lang}...")
+            translator = GoogleTranslator(source='auto', target=target_lang)
+            
+            full_transcription = []
+            full_translation = []
+            
+            for s in segments:
+                translated = translator.translate(s['text'])
+                s['translated_text'] = translated
+                full_transcription.append(s['text'])
+                full_translation.append(translated)
+            
+            # 4. Generate cloned voice audio (One by one to match timing)
+            print("Step 4: Generating AI Voice Clone for each segment...")
+            # For simplicity in this version, we still generate a full audio 
+            # but we can now pass the segments back to the frontend for editing.
             output_audio_only = os.path.join(temp_dir, "translated_voice.wav")
             self.tts.tts_to_file(
-                text=translated_text,
+                text=" ".join(full_translation),
                 speaker_wav=temp_audio,
                 language=target_lang,
                 file_path=output_audio_only
@@ -61,21 +79,20 @@ class VideoProcessor:
             # 5. Merge back
             print("Step 5: Merging audio and video...")
             new_voice = AudioFileClip(output_audio_only)
-            
-            # Simple merge (Enhancement: Keep original video's audio at lower volume if requested)
             final_video = video.set_audio(new_voice)
             final_video.write_videofile(output_path, codec="libx264", audio_codec="aac", logger=None)
             
             # Cleanup
             video.close()
             new_voice.close()
-            shutil.rmtree(temp_dir, ignore_errors=True)
+            # shutil.rmtree(temp_dir, ignore_errors=True) # Keep for a bit if debugging
             
             print(f"🎉 Job {job_id} completed successfully!")
             return {
                 "status": "success",
-                "transcription": full_text,
-                "translation": translated_text
+                "segments": segments,
+                "transcription": " ".join(full_transcription),
+                "translation": " ".join(full_translation)
             }
             
         except Exception as e:

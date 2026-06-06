@@ -26,6 +26,7 @@ export default function Home() {
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [transcription, setTranscription] = useState<string | null>(null);
   const [translation, setTranslation] = useState<string | null>(null);
+  const [segments, setSegments] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,6 +70,7 @@ export default function Home() {
             setResultUrl(res.data.url);
             setTranscription(res.data.transcription);
             setTranslation(res.data.translation);
+            setSegments(res.data.segments || []);
             setStatus('completed');
             setProgress(100);
             clearInterval(interval);
@@ -250,18 +252,25 @@ export default function Home() {
                     <p className="text-slate-400 text-sm">Chúng tôi đã hoàn thành việc dịch và lồng tiếng bằng AI.</p>
                     
                     {/* Transcription & Translation Details */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                      <div className="bg-white/5 p-3 rounded-lg border border-white/5">
-                        <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Gốc</p>
-                        <p className="text-xs text-slate-300 line-clamp-3">{transcription}</p>
-                      </div>
-                      <div className="bg-indigo-500/10 p-3 rounded-lg border border-indigo-500/10">
-                        <p className="text-[10px] text-indigo-400 uppercase font-bold mb-1">Dịch</p>
-                        <p className="text-xs text-slate-300 line-clamp-3">{translation}</p>
+                    <div className="space-y-4 mt-6">
+                      <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Timeline Chi Tiết</h4>
+                      <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                        {segments.map((seg, idx) => (
+                          <div key={idx} className="bg-white/5 border border-white/5 rounded-xl p-4 hover:border-indigo-500/30 transition-all group">
+                            <div className="flex justify-between items-start mb-2">
+                              <span className="text-[10px] font-mono text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">
+                                {seg.start.toFixed(2)}s - {seg.end.toFixed(2)}s
+                              </span>
+                              <button className="opacity-0 group-hover:opacity-100 text-[10px] text-slate-500 hover:text-white transition-all">Sửa đoạn này</button>
+                            </div>
+                            <p className="text-xs text-slate-400 italic mb-2">"{seg.text}"</p>
+                            <p className="text-sm text-slate-200 font-medium">{seg.translated_text}</p>
+                          </div>
+                        ))}
                       </div>
                     </div>
 
-                    <div className="flex gap-3 pt-2">
+                    <div className="flex gap-3 pt-6">
                       <a 
                         href={resultUrl} 
                         download 

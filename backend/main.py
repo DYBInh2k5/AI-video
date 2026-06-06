@@ -70,6 +70,7 @@ async def process_video_task(job_id: str, video_path: str, target_lang: str):
             "status": "completed",
             "url": f"{BASE_URL}/outputs/{output_filename}",
             "filename": output_filename,
+            "segments": result.get("segments"),
             "transcription": result.get("transcription"),
             "translation": result.get("translation")
         }
