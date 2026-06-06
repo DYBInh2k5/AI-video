@@ -10,7 +10,8 @@ from processor import VideoProcessor
 
 app = FastAPI(title="AI Video Translator")
 
-BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
+# Priority: BASE_URL env > RENDER_EXTERNAL_URL (Render.com) > Default localhost
+BASE_URL = os.getenv("BASE_URL") or os.getenv("RENDER_EXTERNAL_URL") or "http://localhost:8000"
 
 # CORS
 app.add_middleware(

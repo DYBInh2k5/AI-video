@@ -7,8 +7,6 @@ services:
     dockerfilePath: ./backend/Dockerfile
     plan: pro # Recommendation: AI models need at least 4GB-8GB RAM
     envVars:
-      - key: BASE_URL
-        fromContext: instanceUrl
       - key: COQUI_TOS_AGREED
         value: "1"
     disk:
